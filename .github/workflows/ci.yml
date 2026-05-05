@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # JDK 21
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # Node 설치
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # React build
+      - name: Build React
+        run: |
+          cd react_coffee
+          npm ci
+          npm run build
+
+      # Spring build (Maven)
+      - name: Build Spring
+        run: |
+          cd spring_coffee
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
+
+      # Docker build 테스트 (선택)
+      - name: Docker build test
+        run: docker compose build
