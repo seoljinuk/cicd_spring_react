@@ -16,6 +16,12 @@ git commit -m "ci/cd project"
 
 git push -u origin master
 
+수정한 다음 
+git commit -am "ci/cd project"
+
+git push
+
+을 수행합니다.
 
 GitHub는 보안을 위해:
 
