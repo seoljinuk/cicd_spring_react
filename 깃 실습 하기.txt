@@ -17,7 +17,9 @@ git commit -m "ci/cd project"
 git push -u origin master
 
 수정한 다음 
-git commit -am "ci/cd project"
+git add -A
+
+git commit -m "ci/cd project"
 
 git push
 
