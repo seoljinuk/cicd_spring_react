@@ -23,10 +23,11 @@ jobs:
         run: |
           cd spring_coffee
           #mvn clean package -DskipTests
+          chmod +x mvnw
           ./mvnw clean package -DskipTests
 
       # Docker build
-      - name: Docker build
+      - name: Docker build ##
         run: docker-compose build
 
       # EC2 배포
@@ -37,7 +38,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd ~/project
+            cd ~/spring_react
             git pull
             docker-compose down
             docker-compose up -d --build

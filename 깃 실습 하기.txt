@@ -2,14 +2,25 @@ git init
 
 git config --global core.autocrlf true
 
+git config --global core.safecrlf false
+
 git config user.name "cicdman"
 
-git config user.name "cicdman@naver.com"
+git config user.email "cicdman@naver.com"
 
 git remote add origin https://github.com/seoljinuk/cicd_spring_react.git
 
 git add -A
 
+git commit -m "ci/cd project"
+
+git push -u origin master
+
+
+GitHub는 보안을 위해:
+
+?? GitHub Actions(workflow 파일) 수정 시
+?? 일반 권한보다 더 강한 권한 (workflow) 필요
 
 
 
