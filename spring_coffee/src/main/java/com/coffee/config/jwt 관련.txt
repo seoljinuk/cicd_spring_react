@@ -1,0 +1,5 @@
+항목	세션	JWT
+인증 방식	서버 세션	토큰
+저장 위치	쿠키	localStorage
+설정	formLogin	필터 필요
+withCredentials	필요	불필요

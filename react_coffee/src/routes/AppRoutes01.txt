@@ -1,0 +1,28 @@
+import { Route, Routes } from "react-router-dom";
+
+import FruitList from './../pages/FruitList';
+import FruitOne from './../pages/FruitOne'; // 표현식01
+import HomePage from './../pages/HomePage';
+import LoginPage from './../pages/LoginPage';
+import SignupPage from './../pages/SignupPage';
+
+import type { User } from "../types/User";
+
+interface AppProps {
+    user: User | null;
+    handleLoginSuccess: (userData: User) => void;
+}
+
+function App({ user, handleLoginSuccess }: AppProps) {
+    return (
+        <Routes>
+            <Route path='/fruit' element={<FruitOne />} />
+            <Route path='/fruit/list' element={<FruitList />} />
+            <Route path='/' element={<HomePage />} />
+            <Route path='/member/signup' element={<SignupPage />} />
+            <Route path='/member/login' element={< LoginPage onLogin={handleLoginSuccess} />} />
+        </Routes>
+    );
+}
+
+export default App;

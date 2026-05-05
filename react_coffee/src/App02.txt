@@ -1,0 +1,57 @@
+import { useEffect, useState } from 'react';
+import './App.css';
+
+// 분리된 리액트 컴포넌트 import
+import { useNavigate } from 'react-router-dom';
+import AppRouters from './routes/AppRoutes';
+import type { User } from "./types/User";
+import MenuItems from './ui/MenuItems';
+
+function App() {
+  const appName = "IT Academy Coffee Shop";
+
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loginUser = localStorage.getItem('user');
+    if (typeof loginUser === 'string') {
+      const parsed = JSON.parse(loginUser);
+      setUser(parsed);
+    }
+  }, []);
+
+  const handleLoginSuccess = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    console.log('로그인 성공');
+  }
+
+  const navigate = useNavigate();
+
+  // 로그인한 사용자가 '로그 아웃' 버튼을 클릭했습니다.
+  const handleLogout = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+
+    setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');	
+    console.log('로그 아웃 성공');
+    navigate(`/member/login`);
+  };
+
+  return (
+    <>
+      <MenuItems appName={appName} user={user} handleLogout={handleLogout} />
+
+      {/* 분리된 라우터 정보 */}
+      {/* handleLoginSuccess는 로그인 성공 후 사용자 상태를 갱신하는 함수 */}
+      <AppRouters user={user} handleLoginSuccess={handleLoginSuccess} />
+
+      <footer className="bg-dark text-light text-center py-3 mt-5">
+        <p>&copy; 2025 {appName}. All rights reserved.</p>
+      </footer>
+    </>
+  );
+}
+
+export default App;

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .username {
+            color: blue;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<h3>홈 페이지</h3>
+<p><span class="username">홍길동</span>님~~ 안녕하세요.</p>
+</body>
+</html>

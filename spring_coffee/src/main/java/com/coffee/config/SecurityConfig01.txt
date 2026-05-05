@@ -1,0 +1,43 @@
+package com.coffee.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+/*
+    1. /images/** 경로는 로그인 안 해도 접근 허용
+    2. 이미지 요청을 제외한 나머지 모든 요청은 로그인이 필요합니다.
+       /login 페이지는 직접 구현 요망
+*/
+        // 인증 없이 요청을 허용할 url 배열
+        String[] permitUrls = {
+            "/images/**", "/fruit/**", "/css/**", "/js/**", "/member/signup", "/member/login"
+        };
+
+        // Spring Security 기본 정책 : POST / PUT / DELETE 요청은 CSRF 토큰 필요
+        // 지금은 CSRF을 일단 비활성화 시켜 두고, 이후 JWT를 사용하면 지금 겪는 문제(CSRF + 리다이렉트)는 깔끔하게 해결됩니다.
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(permitUrls).permitAll() // 이미지 허용
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/member/login") // 커스텀 로그인 페이지
+                        .permitAll()
+                );
+
+        http.cors(cors -> {});
+
+        return http.build();
+    }
+}

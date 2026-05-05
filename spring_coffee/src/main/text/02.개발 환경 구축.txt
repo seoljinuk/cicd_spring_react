@@ -1,0 +1,152 @@
+**********************************************************************************
+홈 페이지 구성 절차
+**********************************************************************************
+1.	기본 포트 지정
+2.	시작 페이지 작성
+3.	스프링 부트 애플리케이션 실행
+4.	브라우저 확인
+
+1.	기본 포트 지정
+파일 : application.properties
+server.port=9000
+
+2.	시작 페이지 작성
+시작 페이지 작성 : src/main/resources/static/index.html
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>홈 페이지</title>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+      }
+      .username {
+         color: blue;
+         font-weight: bold;
+      }
+   </style>
+</head>
+<body>
+<h3>홈 페이지</h3>
+<p><span class="username">홍길동</span>님~~ 안녕하세요.</p>
+</body>
+</html>
+
+3.	스프링 부트 애플리케이션 실행
+CoffeeApplication.java 파일 실행
+
+4.	브라우저 확인
+브라우저에서 'http://localhost:9000'라고 입력 후 확인
+**********************************************************************************
+# Vite로 React 프로젝트 생성
+**********************************************************************************
+원하는 폴더에서 다음과 같이 실행합니다.
+c:\ 드라이브 혹은 d:\ 드라이브에서 시작합니다.
+
+npm create vite@latest 엔터
+Need to install the following packages:
+create-vite@8.3.0
+Ok to proceed? (y) y
+
+
+> npx
+> create-vite
+
+|
+o  Project name:
+|  react_coffee
+|
+o  Select a framework:
+|  React
+|
+o  Select a variant:
+|  TypeScript + React Compiler
+|
+o  Use Vite 8 beta (Experimental)?:
+|  No
+|
+o  Install with npm and start now?
+|  Yes
+|
+o  Scaffolding project in D:\react_coffee...
+|
+o  Installing dependencies with npm...
+
+added 179 packages, and audited 180 packages in 3m
+
+46 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+|
+o  Starting dev server...
+
+> react_coffee@0.0.0 dev
+> vite
+
+
+  VITE v7.3.1  ready in 6769 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+
+파일 이름 : Vite + React.png 참조
+
+# 프로젝트 폴더로 이동
+cd react_coffee
+
+# 패키지 설치
+npm install
+
+# 개발 서버 다시 실행하기
+npm run dev
+
+# 브라우저에서 확인
+http://localhost:5173/ 라고 입력 후 엔터
+**********************************************************************************
+# 라이브러리 설치
+**********************************************************************************
+npm install axios
+npm install react-router-dom
+npm install bootstrap
+npm install react-bootstrap
+**********************************************************************************
+# MySQL 설정
+**********************************************************************************
+-- coffee 데이터 베이스 삭제
+drop database coffee ;
+
+-- coffee 데이터 베이스 생성
+create database coffee ;
+
+-- 데이터 베이스 목록 확인
+show databases;
+
+-- coffee 데이터 베이스를 사용하겠습니다.
+use coffee ;
+
+-- 테이블 목록을 보여 주세요.
+show tables ;
+
+-- auto_increment : 숫자가 1씩 자동으로 커짐, 오라클의 시퀀스와 유사
+create table coffee(
+	id int auto_increment primary key,
+	name varchar(50) not null,
+	type varchar(30),
+	price decimal(5, 2) not null
+);
+
+insert into coffee (name, type, price) values
+('Espresso', 'Espresso', 3.50),
+('Latte', 'Milk Coffee', 4.50),
+('Cappuccino', 'Milk Coffee', 4.00),
+('Americano', 'Black Coffee', 3.00);
+
+commit;
+
+select * from coffee;
+**********************************************************************************

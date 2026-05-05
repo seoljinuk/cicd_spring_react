@@ -1,0 +1,8 @@
+TypeScript의 인터페이스(interface) 선언
+interface는 객체가 어떤 속성을 가져야 하는지 미리 정의하는 것입니다.
+
+export interface Fruit {
+  id: string
+  name: string
+  price: number
+}

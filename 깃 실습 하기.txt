@@ -1,0 +1,22 @@
+git init 
+
+git config --global core.autocrlf true
+
+git config user.name "cicdman"
+
+git config user.name "cicdman@naver.com"
+
+git remote add origin https://github.com/seoljinuk/cicd_spring_react.git
+
+git add -A
+
+
+
+
+D:\spring_react 디렉토리가 깃 저장소인데 
+D:\spring_react\react_coffee\node_modules 디렉토리를 깃 관리 대상에서 제외하려면 어떻게 해야 하나요
+
+혹시 다음 디렉토리는 npm run build 명령어로 생긴 디렉토리인데 이 항목은 관리 대상에서 제외해야 하나요
+D:\spring_react\react_coffee\dist
+
+react_coffee 디렉토리와 spring_coffee 디렉토리 아래에 .gitignore 파일이 있는 그냥 놔둬도 되나요

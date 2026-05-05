@@ -1,0 +1,66 @@
+import { Button, Container, Form, Table } from "react-bootstrap";
+
+import type { User } from "../types/User";
+
+/* 
+구조 분해 할당 + 타입 지정
+
+정석적인 표현은 이렇습니다.
+    function App(props: AppProps) {
+        const user = props.user;
+    }
+
+줄여서 쓴 것이:
+    function App({ user }: AppProps)
+*/
+
+type AppProps = {
+    user: User | null; // user는 User 객체 혹은 null일 수도 있습니다.
+}
+
+function App({ user }: AppProps) {
+    const thStyle = { fontSize: '1.2rem' }; // 테이블 헤더 스타일
+
+    return (
+        <Container className="mt-4">
+            <h2 className="mb-4">
+                {/* xxrem은 주위 글꼴의 xx배를 의미합니다. */}
+                <span style={{ color: 'blue', fontSize: '2rem' }}>{user?.name}</span>
+                <span style={{ fontSize: '1.3rem' }}>님의 장바구니</span>
+            </h2>
+            <Table striped bordered>
+                <thead>
+                    <tr>
+                        <th style={thStyle}>
+                            <Form.Check
+                                type="checkbox"
+                                label="전체 선택"
+                            />
+                        </th>
+                        <th style={thStyle}>상품 정보</th>
+                        <th style={thStyle}>재고</th>
+                        <th style={thStyle}>수량</th>
+                        <th style={thStyle}>단가</th>
+                        <th style={thStyle}>금액</th>
+                        <th style={thStyle}>삭제</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>xx</td>
+                    </tr>
+                </tbody>
+            </Table>
+
+            {/* 좌측 정렬(text-start), 가운데 정렬(text-center), 우측 정렬(text-end) */}
+            <h3 className="text-end mt-3">총 주문 금액 : 0원</h3>
+            <div className="text-end">
+                <Button variant="primary" size="lg" >
+                    주문하기
+                </Button>
+            </div>
+        </Container>
+    );
+}
+
+export default App;
