@@ -1,0 +1,22 @@
+# 시스템의 패키지 목록을 최신 상태로 업데이트합니다.
+apt update
+apt install -y apt-transport-https
+apt install -y ca-certificates curl software-properties-common
+apt install -y gnupg lsb-release
+
+# Docker의 공식 GPG 키를 시스템에 추가합니다.
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# 다운로드가 잘 되었는지 확인합니다.
+ls -al /usr/share/keyrings/d*
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 실행하면 프롬프트에는 아무런 변화가 없습니다.
+
+apt update
+
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 다음 명령어를 실행하여 결과와 같이 출력이 되면 성공한 것입니다.
+# docker container --help
