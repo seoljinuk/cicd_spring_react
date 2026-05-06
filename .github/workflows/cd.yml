@@ -20,6 +20,9 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/spring_react
+            
+            export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
+            export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}            
 
             echo "===== Pull latest Docker images ====="
             docker compose pull
