@@ -12,36 +12,66 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # JDK 21
-      - name: Set up JDK 21
+      # =====================================================
+      # 🔵 COMMON SETUP
+      # =====================================================
+
+      - name: Set up JDK 21 (Spring)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          
-      - name: Build React
-        run: |
-          cd react_coffee
-          npm ci
-          npm run build          
 
-      # Spring build (Maven)
-      - name: Build Spring
+      - name: Set up Node (React)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # =====================================================
+      # 🟢 REACT SECTION
+      # =====================================================
+
+      - name: Build React Docker Image
         run: |
+          echo "===== React Build Start ====="
+          docker build \
+            -t "${{ secrets.DOCKER_REACT_IMAGE }}" \
+            -f react_coffee/DockerfileReact \
+            react_coffee
+          echo "===== React Build Done ====="
+
+      # =====================================================
+      # 🔴 SPRING SECTION
+      # =====================================================
+
+      - name: Build Spring (Maven)
+        run: |
+          echo "===== Spring Maven Build Start ====="
           cd spring_coffee
           chmod +x mvnw
           ./mvnw clean package -DskipTests
+          echo "===== Spring Maven Build Done ====="
 
-      # DockerHub login
       - name: Login to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      # Docker build~~
-      - name: Build Docker Image
         run: |
-          cd spring_coffee
-          docker build -t "${{ secrets.DOCKER_IMAGE }}" -f DockerfileSpring .
+          echo "${{ secrets.DOCKER_PASSWORD }}" | \
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Docker push
-      - name: Push Docker Image
-        run: docker push "${{ secrets.DOCKER_IMAGE }}"
+      - name: Build Spring Docker Image
+        run: |
+          echo "===== Spring Docker Build Start ====="
+          cd spring_coffee
+          docker build \
+            -t "${{ secrets.DOCKER_SPRING_IMAGE }}" \
+            -f DockerfileSpring .
+          echo "===== Spring Docker Build Done ====="
+
+      # =====================================================
+      # 🚀 PUSH SECTION
+      # =====================================================
+
+      - name: Push Spring Image
+        run: docker push "${{ secrets.DOCKER_SPRING_IMAGE }}"
+
+      - name: Push React Image
+        run: docker push "${{ secrets.DOCKER_REACT_IMAGE }}"

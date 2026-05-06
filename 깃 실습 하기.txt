@@ -3,8 +3,9 @@ DOCKER_USERNAME	ugcadman	Docker Hub의 개인 계정
 DOCKER_PASSWORD	dckr_pat_xxxxxxx	Docker Hub에서 발급 받은 Access Token
 EC2_HOST	hello(차후 수정 예정)	Public IP 또는 Elastic IP
 EC2_KEY	world(차후 수정 예정)	key-pair 파일(*.pem)의 내용 내용
-DOCKER_IMAGE	ugcadman/spring-react-img:latest	Docker Hub에 빌드할 이미지 이름
-DOCKER_CONTAINER	spring-react-ctr	Image로 부터 생성되는 Container 이름
+DOCKER_SPRING_IMAGE	ugcadman/spring-img:latest	Docker Hub에 빌드할 이미지 이름
+DOCKER_REACT_IMAGE	ugcadman/react-img:latest
+DOCKER_SPRING_CONTAINER	spring-react-ctr	Image로 부터 생성되는 Container 이름
 
 
 
