@@ -11,26 +11,19 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-        
-      # JDK 21 #ss
+
+      # JDK 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-
-      # Node 설치
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      # React build
-      #- name: Build React
-      #  run: |
-      #    cd react_coffee
-      #    npm ci
-      #    npm run build
+          
+      - name: Build React
+        run: |
+          cd react_coffee
+          npm ci
+          npm run build          
 
       # Spring build (Maven)
       - name: Build Spring
@@ -39,14 +32,16 @@ jobs:
           chmod +x mvnw
           ./mvnw clean package -DskipTests
 
-      # Docker build 테스트 (선택) WWWW
-      #- name: Docker build test
-      #  run: docker compose build
+      # DockerHub login
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+      # Docker build
       - name: Build Docker Image
-        run: docker build -t "${{ secrets.DOCKER_IMAGE }}" -f SpringDockerFile .
+        run: |
+          cd spring_coffee
+          docker build -t "${{ secrets.DOCKER_IMAGE }}" -f DockerfileSpring .
 
+      # Docker push
       - name: Push Docker Image
-        run: docker push "${{ secrets.DOCKER_IMAGE }}"      
+        run: docker push "${{ secrets.DOCKER_IMAGE }}"
