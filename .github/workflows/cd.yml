@@ -2,7 +2,7 @@ name: CD
 
 on:
   workflow_run:
-    workflows: ["CI"]   # CI 끝난 후 실행
+    workflows: ["CI"]
     types:
       - completed
 
@@ -20,6 +20,10 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/spring_react
-            git pull origin master
+
+            echo "===== Pull latest Docker images ====="
+            docker compose pull
+
+            echo "===== Restart containers ====="
             docker compose down
-            docker compose up -d --build
+            docker compose up -d
