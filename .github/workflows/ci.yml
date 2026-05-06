@@ -39,7 +39,7 @@ jobs:
           chmod +x mvnw
           ./mvnw clean package -DskipTests
 
-      # Docker build 테스트 (선택)
+      # Docker build 테스트 (선택) WWWW
       #- name: Docker build test
       #  run: docker compose build
       - name: Login to DockerHub
