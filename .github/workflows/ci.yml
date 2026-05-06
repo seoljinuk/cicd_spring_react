@@ -26,11 +26,11 @@ jobs:
           node-version: '18'
 
       # React build
-      - name: Build React
-        run: |
-          cd react_coffee
-          npm ci
-          npm run build
+      #- name: Build React
+      #  run: |
+      #    cd react_coffee
+      #    npm ci
+      #    npm run build
 
       # Spring build (Maven)
       - name: Build Spring
