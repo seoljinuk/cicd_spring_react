@@ -131,3 +131,156 @@ docker stats
 보세요.
 
 아마 메모리가 거의 꽉 차 있을 가능성이 큽니다.
+
+핵심 오류는 이것입니다.
+
+no space left on device
+
+즉 EC2 디스크 용량이 꽉 찼습니다.
+
+특히 여기:
+
+/var/lib/containerd/
+
+는 Docker 이미지 저장 영역입니다.
+
+MySQL 이미지 레이어를 풀다가 저장 공간 부족으로 실패한 상태입니다.
+
+왜 발생했는가?
+
+현재 상황:
+
+Docker image pull 반복
+이전 이미지 누적
+container layer 누적
+build cache 누적
+volume 누적
+
+때문에 디스크가 꽉 찬 것입니다.
+
+특히:
+
+mysql:8
+
+이미지는 꽤 큽니다.
+
+현재 가장 먼저 해야 할 것
+디스크 확인
+
+EC2 접속 후:
+
+df -h
+
+보면 아마:
+
+/dev/root  100%
+
+근처일 가능성이 큽니다.
+
+즉시 해결 방법
+Docker 정리
+
+아래 순서대로 실행하세요.
+
+1. 사용 안 하는 컨테이너 제거
+docker container prune -f
+2. 사용 안 하는 이미지 제거
+docker image prune -a -f
+3. build cache 제거
+docker builder prune -a -f
+4. 사용 안 하는 volume 제거
+
+주의:
+MySQL 데이터 삭제될 수 있습니다.
+
+데이터 중요하면 실행 전 확인하세요.
+
+docker volume prune -f
+5. 한 번에 전체 정리 (추천)
+
+보통 이것만으로 해결됩니다.
+
+docker system prune -a --volumes -f
+정리 후 확인
+df -h
+그 다음 다시 배포
+
+GitHub Actions 재실행
+
+추가 권장 사항
+Docker 로그 제한
+
+로그가 계속 쌓이면 디스크가 다시 꽉 찹니다.
+
+docker-compose.yml 에 추가 추천:
+
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+예시:
+
+spring:
+  image: your-image
+
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+장기 해결책
+방법 1
+EC2 디스크 증설 (추천)
+
+AWS EC2의 EBS 용량 늘리기:
+
+예:
+
+8GB → 20GB
+
+보통 Docker 사용 시 20GB 이상 추천
+
+방법 2
+MySQL 제거
+
+개발 단계면:
+
+RDS 사용
+또는 MySQL 컨테이너 제거
+
+하면 훨씬 가벼워집니다.
+
+현재 가장 추천하는 순서
+EC2에서
+docker system prune -a --volumes -f
+
+↓
+
+df -h
+
+↓
+
+GitHub Actions 재배포
+
+주의
+
+이 명령:
+
+docker system prune -a --volumes -f
+
+은:
+
+중지된 컨테이너
+안 쓰는 이미지
+캐시
+볼륨
+
+전부 제거합니다.
+
+MySQL 데이터를 유지해야 하면 먼저:
+
+docker volume ls
+
+확인 후 진행하세요.

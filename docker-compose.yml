@@ -27,6 +27,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: My@Sql01
     ports:
       - "9000:9000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"      
 
   frontend:
     image: ${DOCKER_REACT_IMAGE}
