@@ -60,3 +60,74 @@ D:\spring_react\react_coffee\node_modules 디렉토리를 깃 관리 대상에서 제외하려면
 D:\spring_react\react_coffee\dist
 
 react_coffee 디렉토리와 spring_coffee 디렉토리 아래에 .gitignore 파일이 있는 그냥 놔둬도 되나요
+
+
+
+
+메모리 부족
+
+해결 방법 1 (강력 추천)
+swap 메모리 추가
+
+EC2에서:
+
+sudo fallocate -l 2G /swapfile
+
+sudo chmod 600 /swapfile
+
+sudo mkswap /swapfile
+
+sudo swapon /swapfile
+
+free -h
+
+하면 swap이 추가됩니다.
+
+재부팅 후 유지:
+
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+
+해결 방법 2
+Spring 메모리 제한
+
+docker-compose.yml 에:
+
+environment:
+  JAVA_OPTS: "-Xms128m -Xmx512m"
+
+추가 가능
+
+또는 실행 시:
+
+command: ["java", "-Xms128m", "-Xmx512m", "-jar", "app.jar"]
+해결 방법 3
+로그 확인
+
+혹시 컨테이너가 반복 재시작 중이면 SSH가 느려질 수 있습니다.
+
+확인:
+
+docker ps
+docker logs spring-container
+docker stats
+특히 React + Spring + MySQL 조합에서 흔한 상황
+EC2 타입	상태
+t2.micro	매우 버거움
+t3.micro	간당간당
+t3.small 이상	안정적
+현재 가장 먼저 해볼 것
+
+EC2 접속 후:
+
+free -h
+
+결과 확인
+
+그리고:
+
+docker stats
+
+보세요.
+
+아마 메모리가 거의 꽉 차 있을 가능성이 큽니다.
