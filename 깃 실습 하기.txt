@@ -8,6 +8,16 @@ DOCKER_REACT_IMAGE	ugcadman/react-img:latest
 DOCKER_SPRING_CONTAINER	spring-react-ctr	Image로 부터 생성되는 Container 이름
 
 
+# EC2에서 할일
+mkdir /home/ubuntu/spring_react
+
+cd /home/ubuntu/spring_react
+
+docker-compose.yml 파일 복사하기
+
+
+
+
 
 git init 
 
