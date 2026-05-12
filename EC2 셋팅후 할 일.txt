@@ -3,3 +3,7 @@
 	
 다음과 같이 리눅스 설정하기
 mkdir ~/spring_react
+
+docker container ps -a
+
+https://www.ugcadman
