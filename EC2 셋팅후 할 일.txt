@@ -1,0 +1,5 @@
+도커 구축하기
+	docker_setup.sh.txt
+	
+다음과 같이 리눅스 설정하기
+mkdir ~/spring_react
