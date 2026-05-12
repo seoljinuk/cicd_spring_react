@@ -53,13 +53,7 @@ COPY --from=build /app/target/*.jar app.jar
 # ===============================
 # JVM 메모리 제한
 # ===============================
-ENTRYPOINT [
-  "java",
-  "-XX:+UseContainerSupport",
-  "-XX:MaxRAMPercentage=75",
-  "-jar",
-  "app.jar"
-]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75", "-jar", "app.jar" ]
 =====================================================
 파일명 : D:\spring_react\docker-compose.yml
 =====================================================
@@ -167,6 +161,9 @@ management.endpoints.web.exposure.include=health
 management.endpoint.health.show-details=always
 server.tomcat.threads.max=50
 spring.jpa.open-in-view=false
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=2
+spring.datasource.hikari.connection-timeout=30000
 =====================================================
 파일명 : D:\spring_react\.github\workflows\ci.yml
 =====================================================
@@ -200,16 +197,13 @@ jobs:
           node-version: '18'
 
       # =====================================================
-      # ?? REACT SECTION 444
+      # ?? REACT SECTION 555
       # =====================================================
 
       - name: Build React Docker Image
         run: |
           echo "===== React Build Start ====="
-          docker build \
-            -t "${{ secrets.DOCKER_REACT_IMAGE }}" \
-            -f react_coffee/DockerfileReact \
-            react_coffee
+          docker build -t "${{ secrets.DOCKER_REACT_IMAGE }}" -f react_coffee/DockerfileReact react_coffee
           echo "===== React Build Done ====="
 
       # =====================================================
@@ -226,16 +220,13 @@ jobs:
 
       - name: Login to DockerHub
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | \
-          docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Spring Docker Image
         run: |
           echo "===== Spring Docker Build Start ====="
           cd spring_coffee
-          docker build \
-            -t "${{ secrets.DOCKER_SPRING_IMAGE }}" \
-            -f DockerfileSpring .
+          docker build -t "${{ secrets.DOCKER_SPRING_IMAGE }}" -f DockerfileSpring .
           echo "===== Spring Docker Build Done ====="
 
       # =====================================================
@@ -300,10 +291,10 @@ jobs:
 
             #docker compose up -d --remove-orphans
             docker compose up -d --force-recreate
-			
-			docker image prune -af
-			
-			docker builder prune -af
+            
+            docker image prune -af
+            
+            docker builder prune -af
 =====================================================
 파일명 : .env
 =====================================================

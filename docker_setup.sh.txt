@@ -1,5 +1,6 @@
 # 시스템의 패키지 목록을 최신 상태로 업데이트합니다.
 apt update
+
 apt install -y apt-transport-https
 apt install -y ca-certificates curl software-properties-common
 apt install -y gnupg lsb-release
@@ -20,3 +21,5 @@ apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker
 
 # 다음 명령어를 실행하여 결과와 같이 출력이 되면 성공한 것입니다.
 # docker container --help
+
+# systemctl status docker

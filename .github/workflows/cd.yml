@@ -38,17 +38,36 @@ jobs:
 
             cd ~/spring_react
 
+            # ==================================================
+            # Docker Image
+            # ==================================================
+
             export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
 
             export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}
 
+            # ==================================================
+            # RDS Environment
+            # ==================================================
+
+            export RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
+
+            export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
+
+            export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
+
+            # ==================================================
+            # Docker Compose Deploy
+            # ==================================================
+
             docker compose pull
 
-            # docker compose down # down 하면 잠깐 서비스 중단 발생.
-
-            #docker compose up -d --remove-orphans
             docker compose up -d --force-recreate
-            
+
+            # ==================================================
+            # Docker Cleanup
+            # ==================================================
+
             docker image prune -af
-            
+
             docker builder prune -af
