@@ -1,6 +1,6 @@
 @echo off
 
-# make 8:07
+rem make 8:07
 git add -A
 git commit -m "ci cd project %1"
 git push
