@@ -28,7 +28,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
 
           script: |
-
+            mkdir -p ~/spring_react
             cd ~/spring_react
 
             # ==================================================
@@ -77,7 +77,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
 
           script: |
-
+            mkdir -p ~/spring_react
             cd ~/spring_react
 
             # ==================================================
