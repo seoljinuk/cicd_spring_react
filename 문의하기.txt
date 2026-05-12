@@ -33,15 +33,33 @@ FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
 COPY . .
+
 RUN chmod +x mvnw
+
 RUN ./mvnw clean package -DskipTests
 
-FROM eclipse-temurin:21-jdk
+
+# ===============================
+# 실행 전용 경량 이미지 사용
+# ===============================
+# JDK는 개발 도구 포함(javac 등), JRE는 실행만 가능
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
+
 COPY --from=build /app/target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# ===============================
+# JVM 메모리 제한
+# ===============================
+ENTRYPOINT [
+  "java",
+  "-XX:+UseContainerSupport",
+  "-XX:MaxRAMPercentage=75",
+  "-jar",
+  "app.jar"
+]
 =====================================================
 파일명 : D:\spring_react\docker-compose.yml
 =====================================================
@@ -56,20 +74,42 @@ services:
     restart: always
 
     environment:
-
       SPRING_PROFILES_ACTIVE: prod
-
-      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/coffee
-
+      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/coffee?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: ${RDS_USERNAME}
-
       SPRING_DATASOURCE_PASSWORD: ${RDS_PASSWORD}
+
+      JAVA_OPTS: >
+        -Xms256m
+        -Xmx512m
+        -XX:+UseG1GC
+        -XX:+UseContainerSupport
+
+    command: >
+      sh -c "java $JAVA_OPTS -jar app.jar"
 
     ports:
       - "9000:9000"
 
+    deploy:
+      resources:
+        limits:
+          memory: 700M
+
     networks:
       - coffee-network
+      
+    logging: # Docker 로그 제한, 안 하면 로그가 디스크와 메모리 먹습니다.
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"         
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
   frontend:
@@ -81,10 +121,22 @@ services:
     restart: always
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+        
+    logging: # Docker 로그 제한, 안 하면 로그가 디스크와 메모리 먹습니다.
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"        
 
     ports:
       - "80:80"
+
+    deploy:
+      resources:
+        limits:
+          memory: 200M
 
     networks:
       - coffee-network
@@ -93,21 +145,28 @@ services:
 networks:
   coffee-network:
 =====================================================
+파일명 : D:\spring_react\spring_coffee\pom.xml
+=====================================================  
+		<!-- 현재 actuator 없음. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>	  
+=====================================================
 파일명 : D:\spring_react\spring_coffee\src\main\resources\application.properties
 =====================================================
 spring.application.name=Coffee
 server.port=9000
-productImageLocation=C:\\shop\\images\\
-uploadPath=file:///C:/shop/images/
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.jpa.properties.hibernate.show_sql=true
-spring.jpa.properties.hibernate.format_sql=true
-logging.level.org.hibernate.type.descriptor.sql=trace
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
 server.servlet.session.timeout=120m
 jwt.secret=my-secret-key-my-secret-key-my-secret-key
 jwt.expiration=3600000
+management.endpoints.web.exposure.include=health
+management.endpoint.health.show-details=always
+server.tomcat.threads.max=50
+spring.jpa.open-in-view=false
 =====================================================
 파일명 : D:\spring_react\.github\workflows\ci.yml
 =====================================================
@@ -239,9 +298,12 @@ jobs:
 
             # docker compose down # down 하면 잠깐 서비스 중단 발생.
 
-            docker compose up -d --remove-orphans
+            #docker compose up -d --remove-orphans
+            docker compose up -d --force-recreate
 			
 			docker image prune -af
+			
+			docker builder prune -af
 =====================================================
 파일명 : .env
 =====================================================
@@ -252,7 +314,7 @@ RDS_ENDPOINT=mydb.xxxxx.ap-northeast-2.rds.amazonaws.com
 RDS_USERNAME=admin
 RDS_PASSWORD=yourpassword
 =====================================================
-파일명 : nginx.conf
+파일명 : D:\GitTest\cicd_spring_react\react_coffee\nginx\nginx.conf
 =====================================================
 server {
 
@@ -267,7 +329,7 @@ server {
 
     location /api/ {
 
-        proxy_pass http://backend:9000/;
+        proxy_pass http://backend:9000;
 
         proxy_http_version 1.1;
 
@@ -277,6 +339,33 @@ server {
     }
 }
 ===================================================================================== 
+최종 추천 구조
+
+D:\GitTest\cicd_spring_react
+│
+├── react_coffee
+│   ├── DockerfileReact
+│   │
+│   ├── nginx
+│   │    └── nginx.conf      ← 여기
+│   │
+│   ├── src
+│   ├── public
+│   └── package.json
+│
+├── spring_coffee
+│   └── DockerfileSpring
+│
+├── .env                     ← 여기
+├── .gitignore
+├── docker-compose.yml       ← 여기
+│
+└── .github
+    └── workflows
+         ├── ci.yml
+         └── cd.yml
+===================================================================================== 	 
+
 /home/ubuntu/spring_react
 │
 ├── docker-compose.yml
@@ -316,8 +405,7 @@ Load Balancer	EDU-ALB	Application Load Balancer Name
 
 질문 사항
 ci/cd를 사용하여 2개의 인스턴스에 각각 도커를 사용하여 웹서버를 구축하고자 합니다.
-
-수정할 작업 내용을 좀 알려 주세요.
+수정할 작업 내용이 있으면, 수정한 전체 파일을 제시해 주세요.
 
 위의 파일들을 사용하여 스프링과 리액트에 대한 CI/CD를 구현하려고 합니다.
 코드에 잘못된 내용이 있는 지 지적하고, 변경까지 해주세요.

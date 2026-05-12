@@ -3,12 +3,30 @@ FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
 COPY . .
+
 RUN chmod +x mvnw
+
 RUN ./mvnw clean package -DskipTests
 
-FROM eclipse-temurin:21-jdk
+
+# ===============================
+# 실행 전용 경량 이미지 사용
+# ===============================
+# JDK는 개발 도구 포함(javac 등), JRE는 실행만 가능
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
+
 COPY --from=build /app/target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# ===============================
+# JVM 메모리 제한
+# ===============================
+ENTRYPOINT [
+  "java",
+  "-XX:+UseContainerSupport",
+  "-XX:MaxRAMPercentage=75",
+  "-jar",
+  "app.jar"
+]

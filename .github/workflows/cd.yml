@@ -46,6 +46,9 @@ jobs:
 
             # docker compose down # down 하면 잠깐 서비스 중단 발생.
 
-            docker compose up -d --remove-orphans
+            #docker compose up -d --remove-orphans
+            docker compose up -d --force-recreate
             
             docker image prune -af
+            
+            docker builder prune -af

@@ -10,20 +10,28 @@
 
 
  
+최종 추천 구조
 
 D:\GitTest\cicd_spring_react
 │
 ├── react_coffee
-│   ├── .gitignore
 │   ├── DockerfileReact
+│   │
 │   ├── nginx
-│   │    └── nginx.conf
+│   │    └── nginx.conf      ← 여기
 │   │
 │   ├── src
 │   ├── public
 │   └── package.json
-├── .env
+│
 ├── spring_coffee
-│   ├── .gitignore
+│   └── DockerfileSpring
+│
+├── .env                     ← 여기
 ├── .gitignore
-└── docker-compose.yml 
+├── docker-compose.yml       ← 여기
+│
+└── .github
+    └── workflows
+         ├── ci.yml
+         └── cd.yml

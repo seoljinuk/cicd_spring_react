@@ -92,7 +92,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- JSON 처리 (Jackson 연동) -->
+        <!-- JSON 처리 (Jackson 연동) -->		
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
@@ -113,6 +113,12 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+		
+		<!-- 현재 actuator 없음. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>		
 	</dependencies>
 
 	<build>

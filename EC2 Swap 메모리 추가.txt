@@ -1,0 +1,22 @@
+EC2 Swap 메모리 추가
+
+추가로 꼭 해야 하는 것
+1. EC2 Swap 메모리 추가
+
+512MB ~ 1GB swap 강력 추천.
+
+Ubuntu:
+
+sudo fallocate -l 1G /swapfile
+
+sudo chmod 600 /swapfile
+
+sudo mkswap /swapfile
+
+sudo swapon /swapfile
+
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+확인:
+
+free -h

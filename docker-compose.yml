@@ -9,20 +9,42 @@ services:
     restart: always
 
     environment:
-
       SPRING_PROFILES_ACTIVE: prod
-
-      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/coffee
-
+      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/coffee?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: ${RDS_USERNAME}
-
       SPRING_DATASOURCE_PASSWORD: ${RDS_PASSWORD}
+
+      JAVA_OPTS: >
+        -Xms256m
+        -Xmx512m
+        -XX:+UseG1GC
+        -XX:+UseContainerSupport
+
+    command: >
+      sh -c "java $JAVA_OPTS -jar app.jar"
 
     ports:
       - "9000:9000"
 
+    deploy:
+      resources:
+        limits:
+          memory: 700M
+
     networks:
       - coffee-network
+      
+    logging: # Docker 로그 제한, 안 하면 로그가 디스크와 메모리 먹습니다.
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"         
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
   frontend:
@@ -34,15 +56,26 @@ services:
     restart: always
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+        
+    logging: # Docker 로그 제한, 안 하면 로그가 디스크와 메모리 먹습니다.
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"        
 
     ports:
       - "80:80"
+
+    deploy:
+      resources:
+        limits:
+          memory: 200M
 
     networks:
       - coffee-network
 
 
 networks:
-
   coffee-network:
