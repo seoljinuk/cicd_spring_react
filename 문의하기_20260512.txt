@@ -1,0 +1,498 @@
+다음 파일은 CI/CD를 위한 ci.yml 파일입니다.
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # =====================================================
+      # ?? COMMON SETUP
+      # =====================================================
+
+      - name: Set up JDK 21 (Spring)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Node (React)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # =====================================================
+      # ?? REACT SECTION 444
+      # =====================================================
+
+      - name: Build React Docker Image
+        run: |
+          echo "===== React Build Start ====="
+          docker build \
+            -t "${{ secrets.DOCKER_REACT_IMAGE }}" \
+            -f react_coffee/DockerfileReact \
+            react_coffee
+          echo "===== React Build Done ====="
+
+      # =====================================================
+      # ?? SPRING SECTION
+      # =====================================================
+
+      - name: Build Spring (Maven)
+        run: |
+          echo "===== Spring Maven Build Start ====="
+          cd spring_coffee
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
+          echo "===== Spring Maven Build Done ====="
+
+      - name: Login to DockerHub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | \
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Spring Docker Image
+        run: |
+          echo "===== Spring Docker Build Start ====="
+          cd spring_coffee
+          docker build \
+            -t "${{ secrets.DOCKER_SPRING_IMAGE }}" \
+            -f DockerfileSpring .
+          echo "===== Spring Docker Build Done ====="
+
+      # =====================================================
+      # ?? PUSH SECTION
+      # =====================================================
+
+      - name: Push Spring Image
+        run: docker push "${{ secrets.DOCKER_SPRING_IMAGE }}"
+
+      - name: Push React Image
+        run: docker push "${{ secrets.DOCKER_REACT_IMAGE }}"        
+
+다음 파일은 CI/CD를 위한 cd.yml 파일입니다.
+
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/spring_react
+            
+            export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
+            export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}            
+
+            echo "===== Pull latest Docker images ====="
+            docker compose pull
+
+            echo "===== Restart containers ====="
+            docker compose down
+            docker compose up -d
+
+그리고 다음은 AWS를 위한 관리 장부입니다.
+
+분류	이름	설명	비고
+VPC	EDU-VPC	10.250.0.0/16	65,563개 IP 사용 가능
+인터넷 게이트 웨이	EDU-IGW		
+Subnet	EDU-PUBLIC-SBN-2A	10.250.1.0/24	가용 영역 : 2A(마북리), 251개 IP
+Subnet	EDU-PUBLIC-SBN-2C	10.250.11.0/24	가용 영역 : 2C(평촌), 251개 IP
+라우팅 테이블	EDU-PUBLIC-RT	PUBLIC 라우팅 테이블은 인터넷 게이트웨이 사용하도록 지정합니다. 	
+			
+분류	이름	설명	
+Security Group	EDU-PUBLIC-SG-2A	인바운드 규칙 80, 443, 22 Port	
+Security Group	EDU-PUBLIC-SG-2C	인바운드 규칙 80, 443, 22 Port	
+키페어	edu-keypair		
+EC2	EDU-PUBLIC-EC2-2A	10.250.1.240(for Private IP 주소)	
+EC2	EDU-PUBLIC-EC2-2C	10.250.11.240(for Private IP 주소)	
+EIP	Public-2A-EIP	탄력적 IP for Public-2A	
+EIP	Public-2C-EIP	탄력적 IP for Public-2C	
+			
+분류	이름	설명	
+Target Group	EDU-ALB-TG	Target Group for Application Load Balancer	
+Secutiry Group	EDU-ALB-SG	Application Load Balancer Security Group Name(80, 443)	
+Load Balancer	EDU-ALB	Application Load Balancer Name 	
+
+
+이외에 RDS도 하나 구현되어 있습니다.
+
+
+질문 사항
+ci/cd를 사용하여 2개의 인스턴스에 각각 도커를 사용하여 웹서버를 구축하고자 합니다.
+
+수정할 작업 내용을 좀 알려 주세요.
+
+-----------------------------------------------------------------------------------------
+지피티 제시 안
+-----------------------------------------------------------------------------------------
+현재 구조는:
+
+GitHub Actions
+CI → Docker 이미지 빌드 + DockerHub push
+CD → EC2 접속 후 docker compose 재배포
+EC2 2대 존재
+EDU-PUBLIC-EC2-2A
+EDU-PUBLIC-EC2-2C
+ALB 존재
+EDU-ALB
+Docker 기반 Spring + React 배포
+
+입니다.
+
+그런데 현재 cd.yml 은 EC2 한 대만 배포하도록 되어 있습니다.
+
+즉 지금 수정해야 할 핵심은:
+
+EC2 두 대 모두 자동 배포
+ALB Target Group 에 두 인스턴스 등록
+docker-compose 구조 통일
+무중단/고가용성 고려
+
+입니다.
+
+1. 가장 먼저 해야 하는 AWS 작업
+
+현재 구조는 거의 완성 상태입니다.
+
+확인해야 할 것:
+
+(1) ALB Target Group 등록
+
+EDU-ALB-TG 에:
+
+EC2-2A 등록
+EC2-2C 등록
+
+둘 다 되어 있어야 합니다.
+
+Target Type:
+
+Instance
+
+Port:
+
+80 또는 nginx port
+
+Health Check:
+
+/
+또는
+/actuator/health
+
+추천:
+
+/actuator/health
+
+(Spring actuator 사용 시)
+
+(2) Security Group 확인
+ALB SG
+
+허용:
+
+80
+443
+EC2 SG
+
+현재:
+
+22
+80
+443
+
+추가 권장:
+
+ALB Security Group 에서만 접근 허용
+
+예:
+
+Type	Port	Source
+HTTP	80	EDU-ALB-SG
+
+즉:
+
+인터넷 → ALB
+ALB → EC2
+
+구조 권장
+
+2. docker-compose.yml 수정 필요
+
+현재 CD에서는:
+
+docker compose pull
+docker compose down
+docker compose up -d
+
+만 수행합니다.
+
+즉 EC2 내부에:
+
+docker-compose.yml
+.env
+
+가 있어야 합니다.
+
+추천 docker-compose.yml
+
+EC2 두 대 모두 동일하게 배포
+
+version: '3.8'
+
+services:
+
+  spring:
+    image: ${DOCKER_SPRING_IMAGE}
+    container_name: spring-app
+    restart: always
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+  react:
+    image: ${DOCKER_REACT_IMAGE}
+    container_name: react-app
+    restart: always
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      - spring
+3. 가장 중요한 수정: CD를 2대 배포로 변경
+
+현재:
+
+host: ${{ secrets.EC2_HOST }}
+
+하나만 존재
+
+수정 방식 1 (추천)
+
+job 2개 생성
+
+수정된 cd.yml 예시
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+jobs:
+
+  deploy-2a:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2-2A
+        uses: appleboy/ssh-action@v1
+
+        with:
+          host: ${{ secrets.EC2_HOST_2A }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+
+          script: |
+            cd ~/spring_react
+
+            export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
+            export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}
+
+            docker compose pull
+            docker compose down
+            docker compose up -d
+
+  deploy-2c:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2-2C
+        uses: appleboy/ssh-action@v1
+
+        with:
+          host: ${{ secrets.EC2_HOST_2C }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+
+          script: |
+            cd ~/spring_react
+
+            export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
+            export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}
+
+            docker compose pull
+            docker compose down
+            docker compose up -d
+4. GitHub Secrets 추가 필요
+
+추가:
+
+EC2_HOST_2A
+EC2_HOST_2C
+
+예:
+
+43.xxx.xxx.xxx
+15.xxx.xxx.xxx
+
+(EIP 사용)
+
+5. React 구성 수정 권장
+
+현재 React 를 별도 컨테이너로 운영 중인데:
+
+추천 구조는:
+
+ALB
+ ├─ EC2-2A
+ │   ├─ nginx
+ │   └─ spring
+ │
+ └─ EC2-2C
+     ├─ nginx
+     └─ spring
+
+즉:
+
+React 정적파일 → nginx 서빙
+nginx reverse proxy → spring:8080
+
+이 구조가 운영 안정성이 훨씬 좋습니다.
+
+6. nginx 추천 이유
+
+현재 React 컨테이너 직접 서비스 시:
+
+SPA routing 문제
+HTTPS 처리 문제
+gzip
+cache
+reverse proxy
+websocket
+
+등이 불편합니다.
+
+실무는 거의 nginx 사용합니다.
+
+7. 추천 최종 구조
+
+추천 아키텍처:
+
+Internet
+   ↓
+ALB (443 HTTPS)
+   ↓
+EC2 x 2
+   ↓
+Docker Compose
+   ├─ nginx
+   └─ spring boot
+
+React:
+
+nginx static build
+
+Spring:
+
+8080 internal
+
+RDS:
+
+private access
+8. 추가로 반드시 해야 하는 것
+Spring actuator 추가
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+health endpoint 활성화
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+ALB health check
+/actuator/health
+
+로 설정
+
+9. 현재 구조의 문제점
+
+현재 CD:
+
+docker compose down
+
+은 잠깐 서비스 중단 발생
+
+즉:
+
+2A 내려감
+2C 내려감
+
+동시에 수행되면 순간 장애 발생 가능
+
+10. 운영 수준으로 가려면
+
+추후:
+
+Rolling Deployment
+Blue Green
+ECS
+EKS
+
+등으로 발전 가능
+
+하지만 현재는:
+
+ALB + EC2 2대 + Docker Compose
+
+만으로도 충분히 좋은 구조입니다.
+
+최종적으로 수정할 핵심
+AWS
+Target Group 에 EC2 2대 등록
+ALB health check 설정
+SG 정리
+GitHub Secrets
+
+추가:
+
+EC2_HOST_2A
+EC2_HOST_2C
+cd.yml
+EC2 2대 각각 deploy job 생성
+EC2 내부
+docker-compose.yml 동일 배포
+docker / compose 설치
+추천 추가
+nginx reverse proxy
+actuator health check
+HTTPS(ACM + ALB)
+
+입니다.

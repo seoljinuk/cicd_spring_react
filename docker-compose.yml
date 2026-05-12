@@ -1,45 +1,48 @@
 services:
-  mysql:
-    image: mysql:8
-    container_name: mysql-container
-    environment:
-      MYSQL_ROOT_PASSWORD: My@Sql01
-      MYSQL_DATABASE: coffee
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
   backend:
+
     image: ${DOCKER_SPRING_IMAGE}
+
     container_name: spring-container
-    depends_on:
-      mysql:
-        condition: service_healthy
+
+    restart: always
+
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/coffee
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: My@Sql01
+
+      SPRING_PROFILES_ACTIVE: prod
+
+      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/coffee
+
+      SPRING_DATASOURCE_USERNAME: ${RDS_USERNAME}
+
+      SPRING_DATASOURCE_PASSWORD: ${RDS_PASSWORD}
+
     ports:
       - "9000:9000"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"      
+
+    networks:
+      - coffee-network
+
 
   frontend:
+
     image: ${DOCKER_REACT_IMAGE}
+
     container_name: react-container
+
+    restart: always
+
     depends_on:
       - backend
+
     ports:
       - "80:80"
 
-volumes:
-  mysql-data:
+    networks:
+      - coffee-network
+
+
+networks:
+
+  coffee-network:

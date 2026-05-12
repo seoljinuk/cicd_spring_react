@@ -1,0 +1,29 @@
+/home/ubuntu/spring_react
+│
+├── docker-compose.yml
+├── .env
+│
+├── nginx
+│   └── nginx.conf
+│
+└── frontend
+
+
+ 
+
+D:\GitTest\cicd_spring_react
+│
+├── react_coffee
+│   ├── .gitignore
+│   ├── DockerfileReact
+│   ├── nginx
+│   │    └── nginx.conf
+│   │
+│   ├── src
+│   ├── public
+│   └── package.json
+├── .env
+├── spring_coffee
+│   ├── .gitignore
+├── .gitignore
+└── docker-compose.yml 
