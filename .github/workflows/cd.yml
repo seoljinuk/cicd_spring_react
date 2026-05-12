@@ -7,31 +7,73 @@ on:
       - completed
 
 jobs:
-
   deploy:
-
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        host:
-          - ${{ secrets.EC2_HOST_2A }}
-          - ${{ secrets.EC2_HOST_2C }}
-
+    # matrix 내부에서는 secrets 사용이 불가능합니다.
+    
     steps:
 
-      - name: Deploy to EC2
-
+      # ==================================================
+      # Deploy EC2 2A
+      # ==================================================
+      - name: Deploy to EC2 2A
         uses: appleboy/ssh-action@v1
 
         with:
-
-          host: ${{ matrix.host }}
-
+          host: ${{ secrets.EC2_HOST_2A }}
           username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
 
+          script: |
+
+            cd ~/spring_react
+
+            # ==================================================
+            # Docker Image
+            # ==================================================
+
+            export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
+
+            export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}
+
+            # ==================================================
+            # RDS Environment
+            # ==================================================
+
+            export RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
+
+            export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
+
+            export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
+
+            # ==================================================
+            # Docker Compose Deploy
+            # ==================================================
+
+            docker compose pull
+
+            docker compose up -d --force-recreate
+
+            # ==================================================
+            # Docker Cleanup
+            # ==================================================
+
+            docker image prune -af
+
+            docker builder prune -af
+
+      # ==================================================
+      # Deploy EC2 2C
+      # ==================================================
+      - name: Deploy to EC2 2C
+        uses: appleboy/ssh-action@v1
+
+        with:
+          host: ${{ secrets.EC2_HOST_2C }}
+          username: ubuntu
           key: ${{ secrets.EC2_KEY }}
 
           script: |
