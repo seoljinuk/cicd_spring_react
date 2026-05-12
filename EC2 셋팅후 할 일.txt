@@ -4,6 +4,11 @@
 다음과 같이 리눅스 설정하기
 mkdir ~/spring_react
 
+~/spring_react
+
+# 윈도우에서 docker-compose.yml 파일을 복사해 둡니다.
+
+
 docker container ps -a
 
 https://www.ugcadman

@@ -12,8 +12,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # matrix 내부에서는 secrets 사용이 불가능합니다.
-    
     steps:
 
       # ==================================================
@@ -28,29 +26,99 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
 
           script: |
+
             mkdir -p ~/spring_react
             cd ~/spring_react
 
             # ==================================================
-            # Docker Image
+            # Environment Variable
             # ==================================================
 
             export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
-
             export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}
 
-            # ==================================================
-            # RDS Environment
-            # ==================================================
-
             export RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
-
             export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
-
             export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
 
             # ==================================================
-            # Docker Compose Deploy
+            # Create docker-compose.yml
+            # ==================================================
+
+            cat > docker-compose.yml <<EOF
+            services:
+
+              backend:
+
+                image: \${DOCKER_SPRING_IMAGE}
+
+                container_name: spring-container
+
+                restart: always
+
+                environment:
+                  SPRING_PROFILES_ACTIVE: prod
+                  SPRING_DATASOURCE_URL: jdbc:mysql://\${RDS_ENDPOINT}:3306/coffee?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+                  SPRING_DATASOURCE_USERNAME: \${RDS_USERNAME}
+                  SPRING_DATASOURCE_PASSWORD: \${RDS_PASSWORD}
+
+                  JAVA_OPTS: >
+                    -Xms256m
+                    -Xmx512m
+                    -XX:+UseG1GC
+                    -XX:+UseContainerSupport
+
+                command: >
+                  sh -c "java \$JAVA_OPTS -jar app.jar"
+
+                ports:
+                  - "9000:9000"
+
+                networks:
+                  - coffee-network
+
+                logging:
+                  driver: "json-file"
+                  options:
+                    max-size: "10m"
+                    max-file: "3"
+
+                healthcheck:
+                  test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 5
+
+              frontend:
+
+                image: \${DOCKER_REACT_IMAGE}
+
+                container_name: react-container
+
+                restart: always
+
+                depends_on:
+                  backend:
+                    condition: service_healthy
+
+                ports:
+                  - "80:80"
+
+                networks:
+                  - coffee-network
+
+                logging:
+                  driver: "json-file"
+                  options:
+                    max-size: "10m"
+                    max-file: "3"
+
+            networks:
+              coffee-network:
+            EOF
+
+            # ==================================================
+            # Deploy
             # ==================================================
 
             docker compose pull
@@ -58,7 +126,7 @@ jobs:
             docker compose up -d --force-recreate
 
             # ==================================================
-            # Docker Cleanup
+            # Cleanup
             # ==================================================
 
             docker image prune -af
@@ -77,38 +145,68 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
 
           script: |
+
             mkdir -p ~/spring_react
             cd ~/spring_react
 
-            # ==================================================
-            # Docker Image
-            # ==================================================
-
             export DOCKER_SPRING_IMAGE=${{ secrets.DOCKER_SPRING_IMAGE }}
-
             export DOCKER_REACT_IMAGE=${{ secrets.DOCKER_REACT_IMAGE }}
 
-            # ==================================================
-            # RDS Environment
-            # ==================================================
-
             export RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
-
             export RDS_USERNAME=${{ secrets.RDS_USERNAME }}
-
             export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
 
-            # ==================================================
-            # Docker Compose Deploy
-            # ==================================================
+            cat > docker-compose.yml <<EOF
+            services:
+
+              backend:
+
+                image: \${DOCKER_SPRING_IMAGE}
+
+                container_name: spring-container
+
+                restart: always
+
+                environment:
+                  SPRING_PROFILES_ACTIVE: prod
+                  SPRING_DATASOURCE_URL: jdbc:mysql://\${RDS_ENDPOINT}:3306/coffee?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+                  SPRING_DATASOURCE_USERNAME: \${RDS_USERNAME}
+                  SPRING_DATASOURCE_PASSWORD: \${RDS_PASSWORD}
+
+                command: >
+                  sh -c "java -jar app.jar"
+
+                ports:
+                  - "9000:9000"
+
+                networks:
+                  - coffee-network
+
+              frontend:
+
+                image: \${DOCKER_REACT_IMAGE}
+
+                container_name: react-container
+
+                restart: always
+
+                depends_on:
+                  backend:
+                    condition: service_healthy
+
+                ports:
+                  - "80:80"
+
+                networks:
+                  - coffee-network
+
+            networks:
+              coffee-network:
+            EOF
 
             docker compose pull
 
             docker compose up -d --force-recreate
-
-            # ==================================================
-            # Docker Cleanup
-            # ==================================================
 
             docker image prune -af
 
